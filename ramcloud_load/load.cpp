@@ -41,7 +41,7 @@ Record mem[size10G/minimalSize+2] = {};
 
 // Read /proc/self/status for memory usage. Since we cannot parse it easily we would simply print it. For the same reason this cannot work on windows
 void GetMeminfo(){
-    std::ifstream f("/proc/self/status");
+    std::ifstream f("/proc/self/stat");
 
     if (f.is_open())
         std::cout << f.rdbuf();
@@ -59,7 +59,7 @@ void StartExperiment(int no){
     std::default_random_engine generator;
     std::uniform_int_distribution<size_t> formerDistribution(formerSizeRangeLower[no],formerSizeRangeUpper[no]);
 
-    while(totalUsage<size10G){
+    while (totalUsage<size10G){
         uint size = formerDistribution(generator);
         mem[cnt].data = malloc(size*8);
         mem[cnt].size = size;
@@ -70,20 +70,19 @@ void StartExperiment(int no){
 
     // Try to delete and reallocate object while keep the usage below 10G.
     std::uniform_int_distribution<uint> randomSelection(0,cnt-1);
-    while(footprint<size50G){
-        uint size = formerDistribution(generator);
+    while (footprint<size50G){
         uint pos = randomSelection(generator);
-        if(mem[pos].data==nullptr) {
-            free(mem[pos].data);
-            totalUsage -= mem[pos].size;
-            mem[pos].data = nullptr;
-            mem[pos].size = 0;
-        }
+        if (mem[pos].dat a== nullptr) continue;
+        free(mem[pos].data);
+        totalUsage -= mem[pos].size;
+        mem[pos].data = nullptr;
+        mem[pos].size = 0;
+        uint size = formerDistribution(generator);
         if (totalUsage + size < size10G){
             mem[pos].data = malloc(size*8);
             mem[pos].size = size;
             totalUsage += size;
-            footprint+=size;
+            footprint += size;
         }
     }
 
@@ -99,7 +98,7 @@ void StartExperiment(int no){
 #endif
         // Clear the footprint
         footprint = 0;
-        uint objectsToDelete = floor(deleteFraction[no]*cnt);
+        uint objectsToDelete = floor(deleteFraction[no] * cnt);
         uint objectsDeleted = 0;
         std::uniform_int_distribution<size_t> latterDistribution(latterSizeRangeLower[no],latterSizeRangeUpper[no]);
         while(objectsDeleted<objectsToDelete){
@@ -112,22 +111,21 @@ void StartExperiment(int no){
             objectsDeleted++;
         }
         
-        // Try to delete and reallocate object while keep the usage below 10G. Same as above except for object size. This might be very slow since a lot of objects have to be deleted before you can allocate a big object. And the array will get sparser and sparser, making it more difficult to find some thing to delete.
-        while(footprint<size50G){
-            uint size = latterDistribution(generator);
+        // Try to delete and reallocate object while keep the usage below 10G. Same as above except for object size. This might be very slow since a lot of objects have to be deleted before you can allocate a big object. And the array will get sparser and sparser, making it more difficult to find something to delete.
+        while (footprint<size50G){
             uint pos = randomSelection(generator);
             if(mem[pos].data == nullptr) continue;
-            if(mem[pos].data==nullptr) {
-                free(mem[pos].data);
-                totalUsage -= mem[pos].size;
-                mem[pos].data = nullptr;
-                mem[pos].size = 0;
-            }
+            free(mem[pos].data);
+            totalUsage -= mem[pos].size;
+            mem[pos].data = nullptr;
+            mem[pos].size = 0;
+
+            uint size = latterDistribution(generator);
             if (totalUsage + size < size10G){
                 mem[pos].data = malloc(size*8);
                 mem[pos].size = size;
                 totalUsage += size;
-                footprint+=size;
+                footprint += size;
             }
         }
     }
